@@ -1,4 +1,4 @@
-# Baca Dulu
+# First thing First
 
 1. Laravel 9
 2. Dockerize
@@ -8,3 +8,6 @@
 3. Update env and Service Account
 4. Generate base64 key for env be
    - openssl rand --base64 32
+  
+5. Run DB Migration (Exec to Container)
+   - php artisan migrate
