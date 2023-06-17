@@ -253,6 +253,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
 <script src="{{ asset('assets-adminlte3/dist/js/adminlte.min.js') }}"></script>
 <!-- SweetAlert 2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+{{-- Select2 --}}
+<script src="{{ asset('assets-adminlte3/plugins/select2/js/select2.full.min.js') }}"></script>
 
 
 <!-- Custom Made by Me -->

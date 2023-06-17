@@ -298,15 +298,92 @@ class ReportController extends Controller
 
     public function gcp_index(Request $request)
     {
-        $data_server    = ServerGcp::all();
-        $data_csql      = CloudSqlGcp::all();
-        $cari_layanan   = $request->cari_layanan;
+        $data_semua_ce    = null;
+        $data_semua_csql  = null;
+        $data_semua_lokasi = LokasiGcp::get();
 
-        return view('report.gcp', compact(
-            'data_server',
-            'data_csql',
-            'cari_layanan'
+        $cari_layanan   = $request->get('cari_layanan');
+
+        //Variable Pencarian
+        $cari_nama = $request->get('cari_nama');
+        $cari_lokasi = $request->get('cari_lokasi');
+        $cari_status = $request->get('cari_status');
+
+        $tipe_sort = 'desc';
+        $var_sort = 'created_at';
+
+        $set_pagination = $request->get('set_pagination');
+
+        if ($cari_layanan == 'Compute Engine') {
+
+            // Semua CD
+            $data_semua_ce = ServerGcp::query();
+
+            //Kondisi
+            if($cari_nama != '') {
+                $data_semua_ce = $data_semua_ce->where('nama','LIKE','%'.$cari_nama.'%');
+            }
+
+            if($cari_lokasi != '') {
+                $data_semua_ce = $data_semua_ce->where('lokasi_gcp_id', $cari_lokasi);
+            }
+
+            if($cari_status != '') {
+                $data_semua_ce = $data_semua_ce->where('status', $cari_status);
+            }
+
+            if( $request->has('tipe_sort') || $request->has('var_sort') ) {
+                $tipe_sort = $request->get('tipe_sort');
+                $var_sort = $request->get('var_sort');
+
+                $data_semua_ce = $data_semua_ce->orderBy($var_sort, $tipe_sort);
+            }
+
+
+            // Paginate
+
+            if ($set_pagination != '') {
+                $data_semua_ce = $data_semua_ce
+                            ->orderBy($var_sort, $tipe_sort)
+                            ->paginate($set_pagination);
+            } else {
+                $data_semua_ce = $data_semua_ce
+                            ->orderBy($var_sort, $tipe_sort)
+                            ->paginate(10);
+            }
+
+            $data_semua_ce->appends($request->only(
+                $cari_layanan,
+                $cari_nama, 
+                $cari_lokasi, 
+                $cari_status, 
+
+                $tipe_sort,
+                $var_sort
+            ));
+
+        } elseif ($cari_layanan == 'Cloud SQL') {
+            
+            // Semua CloudSQL
+            $data_semua_csql = CloudSqlGcp::query();
+
+        } 
+        
+         return view('report.gcp', compact(
+            'data_semua_ce',
+            'data_semua_csql',
+            'data_semua_lokasi',
+
+            'cari_layanan',
+            'cari_nama',
+            'cari_lokasi',
+            'cari_status',
+
+            'tipe_sort',
+            'var_sort',
+            'set_pagination'
         ));
+        
     }
 
     //  --- Proxmox Infra ---
