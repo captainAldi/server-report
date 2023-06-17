@@ -1,0 +1,57 @@
+version: "3.7"
+services:
+  server-report-db:
+    image: mariadb:10.6
+    container_name: server-report-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: " "
+      MYSQL_DATABASE: " "
+      MYSQL_USER: " "
+      MYSQL_PASSWORD: " "
+    networks:
+      - server-report
+    volumes:
+    - 'server-report-db-data:/var/lib/mysql'
+
+  server-report-adminer:
+    image: adminer
+    container_name: server-report-adminer
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    networks:
+      - server-report
+  
+  server-report-be:
+    image: harbor.bsa.id/infra/server-report:v0.0.1
+    container_name: server-report-be
+    restart: unless-stopped
+    environment:
+      APP_KEY: " "
+      DB_HOST: "server-report-db"
+      DB_DATABASE: " "
+      DB_USERNAME: " "
+      DB_PASSWORD: " "
+      DB_TIMEZONE: "+07:00"
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/www/html/storage/app/xxxx.json"
+      MAIL_HOST: ""
+      MAIL_PORT: ""
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_ENCRYPTION: "tls"
+    ports:
+      - 5000:80
+    networks:
+      - server-report
+    volumes:
+      - ./data/sa.json:/var/www/html/storage/app/xxxx.json
+    depends_on:
+      - server-report-db
+
+networks:
+  server-report:
+    driver: bridge
+
+volumes:
+  server-report-db-data:
