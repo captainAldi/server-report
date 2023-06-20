@@ -135,7 +135,9 @@
           <a href="{{ route('get.report.usage.gcp') }}" class="btn btn-primary ml-3">Refresh</a>
 
           @if ($cari_layanan != '')
-            <button class="btn btn-success" onclick="exportToExcel()">Excel</button>
+            <button class="btn btn-success" onclick="exportToExcel()">
+              <i class="fa-solid fa-file-excel"></i>
+            </button>
           @endif
         </div>
 
@@ -155,11 +157,6 @@
   <div class="row">
     <div class="col text-right">
       @if ($cari_layanan == 'Compute Engine')
-        <a class="btn btn-primary mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.ce.sync') }}" >
-          <i class="fa-solid fa-rotate">
-          </i>
-        </a>
-
         <a class="btn btn-primary mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.ce.sync') }}" >
           <i class="fa-solid fa-rotate">
           </i>
@@ -330,7 +327,7 @@
     } else {
       formFilter.action = "{{ route('get.report.usage.gcp.csql.excel') }}"
     }
-    
+
     formFilter.submit();
   };
 </script>
