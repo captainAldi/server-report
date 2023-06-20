@@ -14,11 +14,15 @@ use App\Models\CloudSqlGcp;
 use App\Models\LokasiProxmox;
 use App\Models\ServerProxmox;
 
+use App\Exports\ServerGcpExport;
+use App\Exports\CloudSqlGcpExport;
+
 use Google\Auth\ApplicationDefaultCredentials;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 
 use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -367,7 +371,51 @@ class ReportController extends Controller
             // Semua CloudSQL
             $data_semua_csql = CloudSqlGcp::query();
 
+            //Kondisi
+            if($cari_nama != '') {
+                $data_semua_csql = $data_semua_csql->where('nama','LIKE','%'.$cari_nama.'%');
+            }
+
+            if($cari_lokasi != '') {
+                $data_semua_csql = $data_semua_csql->where('lokasi_gcp_id', $cari_lokasi);
+            }
+
+            if($cari_status != '') {
+                $data_semua_csql = $data_semua_csql->where('status', $cari_status);
+            }
+
+            if( $request->has('tipe_sort') || $request->has('var_sort') ) {
+                $tipe_sort = $request->get('tipe_sort');
+                $var_sort = $request->get('var_sort');
+
+                $data_semua_csql = $data_semua_csql->orderBy($var_sort, $tipe_sort);
+            }
+
+
+            // Paginate
+
+            if ($set_pagination != '') {
+                $data_semua_csql = $data_semua_csql
+                            ->orderBy($var_sort, $tipe_sort)
+                            ->paginate($set_pagination);
+            } else {
+                $data_semua_csql = $data_semua_csql
+                            ->orderBy($var_sort, $tipe_sort)
+                            ->paginate(10);
+            }
+
+            $data_semua_csql->appends($request->only(
+                $cari_layanan,
+                $cari_nama, 
+                $cari_lokasi, 
+                $cari_status, 
+
+                $tipe_sort,
+                $var_sort
+            ));
+
         } 
+
         
          return view('report.gcp', compact(
             'data_semua_ce',
@@ -384,6 +432,30 @@ class ReportController extends Controller
             'set_pagination'
         ));
         
+    }
+
+    public function gcp_ce_excel(Request $request)
+    {
+        
+        $cari_nama = $request->get('cari_nama');
+        $cari_lokasi = $request->get('cari_lokasi');
+        $cari_status = $request->get('cari_status');
+
+        $date = date("Y-m-d_H:i:s");
+
+        return Excel::download(new ServerGcpExport($cari_nama, $cari_lokasi, $cari_status), 'server-report-' . $date . '.xlsx');
+    }
+
+    public function gcp_csql_excel(Request $request)
+    {
+        
+        $cari_nama = $request->get('cari_nama');
+        $cari_lokasi = $request->get('cari_lokasi');
+        $cari_status = $request->get('cari_status');
+
+        $date = date("Y-m-d_H:i:s");
+
+        return Excel::download(new CloudSqlGcpExport($cari_nama, $cari_lokasi, $cari_status), 'csql-report-' . $date . '.xlsx');
     }
 
     //  --- Proxmox Infra ---

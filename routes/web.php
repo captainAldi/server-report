@@ -49,7 +49,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('report/usage/proxmox', [App\Http\Controllers\ReportController::class, 'proxmox_index'])->name('get.report.usage.proxmox');
     Route::get('report/usage/proxmox/ce/detail/{id}', [App\Http\Controllers\ReportController::class, 'proxmox_detail'])->name('get.report.usage.proxmox.detail');
 
+    Route::get('report/usage/gcp/ce/excel', [App\Http\Controllers\ReportController::class, 'gcp_ce_excel'])->name('get.report.usage.gcp.ce.excel');
+    Route::get('report/usage/gcp/csql/excel', [App\Http\Controllers\ReportController::class, 'gcp_csql_excel'])->name('get.report.usage.gcp.csql.excel');
+
     Route::get('report/usage/proxmox/vm/sync', [App\Http\Controllers\ReportController::class, 'proxmox_vm_sync'])->name('get.report.usage.proxmox.vm.sync');
+
+    
+    
 
     // Report History
     Route::get('report/history', [App\Http\Controllers\ReportController::class, 'history_index'])->name('get.report.history');

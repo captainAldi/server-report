@@ -14,4 +14,4 @@
 
 # Support
 
-[Buy me a Coffee ](https://trakteer.id/captainAldi/link)
+[Buy me a Coffee](https://trakteer.id/captainAldi/link)

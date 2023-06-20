@@ -12,9 +12,9 @@
     <div class="card-header text-center">
       <div class="row">
         <div class="col">
-          <a href="{{ route('awal') }}" class="h3"><b>BSA</b></a>
+          <a href="{{ route('awal') }}" class="h3"><b>Authentication</b></a>
           <br>
-          <a href="{{ route('awal') }}" class="h3">Server Report</a>
+          <a href="{{ route('awal') }}" class="h3"></a>
         </div>
       </div>
       

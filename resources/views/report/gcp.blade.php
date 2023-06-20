@@ -20,7 +20,7 @@
     <h3 class="class-title">Server</h3>
   </div>
 
-  <form action="{{ route('get.report.usage.gcp') }}" method="get">
+  <form id="form-filter" action="" method="get">
     <!-- Header Tab -->
     <ul class="nav nav-tabs" id="tab-users" role="tablist">
       <li class="nav-item">
@@ -130,9 +130,13 @@
 
       <div class="row ml-2">
         <div class="col">
-          <button type="submit" class="btn btn-primary">Apply</button>
+          <button class="btn btn-primary" onclick="filterData()">Apply</button>
 
           <a href="{{ route('get.report.usage.gcp') }}" class="btn btn-primary ml-3">Refresh</a>
+
+          @if ($cari_layanan != '')
+            <button class="btn btn-success" onclick="exportToExcel()">Excel</button>
+          @endif
         </div>
 
       </div>
@@ -142,6 +146,8 @@
 
   </form>
 
+  
+
 
 
 
@@ -149,6 +155,11 @@
   <div class="row">
     <div class="col text-right">
       @if ($cari_layanan == 'Compute Engine')
+        <a class="btn btn-primary mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.ce.sync') }}" >
+          <i class="fa-solid fa-rotate">
+          </i>
+        </a>
+
         <a class="btn btn-primary mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.ce.sync') }}" >
           <i class="fa-solid fa-rotate">
           </i>
@@ -246,10 +257,10 @@
             </tr>
           </thead>
           <tbody>
-            @foreach($data_csql as $csql)
+            @foreach($data_semua_csql as $csql)
               <tr>
 
-                <td>{{ $loop->iteration }}</td>
+                <td>{{ $loop->iteration + $data_semua_csql->firstItem() - 1 }}</td>
                 <td>{{ $csql->nama }}</td>
                 <td>{{ $csql->lokasi_gcp->id_project }}</td>
                 <td>{{ $csql->tipe }}</td>
@@ -272,6 +283,12 @@
           </tbody>
         </table>
       </div>
+
+      <div class="card-footer clearfix">
+        <h5>Jumlah Data : <span>{{ $data_semua_csql->total() }}</span></h5>
+        {{ $data_semua_csql->links('vendor.pagination.adminlte-3') }}
+      </div>
+
     </div>
   @else
     <div class="card-body">
@@ -284,6 +301,8 @@
 
 @push('scripts')
 <script>
+
+  // Select 2
   $(document).ready(function() {
     $('.select2').select2();
   });
@@ -292,5 +311,27 @@
       theme: 'bootstrap4'
     });
   });
+
+  // Manipulate Form-Filter
+  let formFilter = document.getElementById("form-filter");
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+
+  function filterData() {
+    formFilter.action = "{{ route('get.report.usage.gcp') }}"
+    formFilter.submit();
+  };
+
+  function exportToExcel() {
+    let layanan = urlParams.get('cari_layanan')
+
+    if (layanan == 'Compute Engine') {
+      formFilter.action = "{{ route('get.report.usage.gcp.ce.excel') }}"
+    } else {
+      formFilter.action = "{{ route('get.report.usage.gcp.csql.excel') }}"
+    }
+    
+    formFilter.submit();
+  };
 </script>
 @endpush
