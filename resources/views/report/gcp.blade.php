@@ -78,6 +78,7 @@
                 @endif
 
                 <option value="TERMINATED" {{ $cari_status == "TERMINATED" ? 'selected' : '' }}>Terminated</option>
+                <option value="DELETED" {{ $cari_status == "DELETED" ? 'selected' : '' }}>Deleted</option>
               </select>
             </div>
           @endif
@@ -161,8 +162,18 @@
           <i class="fa-solid fa-rotate">
           </i>
         </a>
+
+        <a class="btn btn-danger mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.ce.sync.deleted') }}" >
+          <i class="fa-solid fa-rotate">
+          </i>
+        </a>
       @elseif ($cari_layanan == 'Cloud SQL')
         <a class="btn btn-primary mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.csql.sync') }}" >
+          <i class="fa-solid fa-rotate">
+          </i>
+        </a>
+
+        <a class="btn btn-danger mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.csql.sync.deleted') }}" >
           <i class="fa-solid fa-rotate">
           </i>
         </a>

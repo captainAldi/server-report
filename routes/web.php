@@ -24,6 +24,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 // Route::get('tes-vpc', [App\Http\Controllers\ReportController::class, 'gcp_ce_sync_vpc']);
 
+
 // No Prefix and Auth Middleware
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -44,7 +45,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('report/usage/gcp/csql/detail/{id}', [App\Http\Controllers\ReportController::class, 'gcp_csql_detail'])->name('get.report.usage.gcp.detail.csql');
 
     Route::get('report/usage/gcp/ce/sync', [App\Http\Controllers\ReportController::class, 'gcp_ce_sync'])->name('get.report.usage.gcp.ce.sync');
+    Route::get('report/usage/gcp/ce/sync/deleted', [App\Http\Controllers\ReportController::class, 'gcp_ce_sync_del'])->name('get.report.usage.gcp.ce.sync.deleted');
     Route::get('report/usage/gcp/csql/sync', [App\Http\Controllers\ReportController::class, 'gcp_csql_sync'])->name('get.report.usage.gcp.csql.sync');
+    Route::get('report/usage/gcp/csql/sync/deleted', [App\Http\Controllers\ReportController::class, 'gcp_csql_sync_del'])->name('get.report.usage.gcp.csql.sync.deleted');
 
     Route::get('report/usage/proxmox', [App\Http\Controllers\ReportController::class, 'proxmox_index'])->name('get.report.usage.proxmox');
     Route::get('report/usage/proxmox/ce/detail/{id}', [App\Http\Controllers\ReportController::class, 'proxmox_detail'])->name('get.report.usage.proxmox.detail');

@@ -114,8 +114,6 @@ class ReportController extends Controller
 
         }
 
-        // dd($ce_mapped_data);
-
         // Save CE to DB
 
         // Proses Simpan ke DB
@@ -175,6 +173,98 @@ class ReportController extends Controller
         return back()->with('pesan', 'Berhasil Sync Data !');
 
 
+    }
+
+    public function gcp_ce_sync_del()
+    {
+
+        $data_project = LokasiGcp::all();
+        $ce_mapped_data_server = [];
+        $ce_mapped_data_db = [];
+
+        $ce_to_delete = [];
+
+        // Sync CE
+        foreach ($data_project as $key_project => $value_project) {
+            
+            try {
+                $ce_data_server = $this->gcp_get_all_ce($value_project->id_project);
+                $ce_mapped_data_server[$value_project->id_project] = $ce_data_server;
+                
+                $ce_data_db = ServerGcp::where('lokasi_gcp_id', $value_project->id)->get()->toArray();
+                $ce_mapped_data_db[$value_project->id_project] = $ce_data_db;
+                
+            } catch (\Throwable $th) {
+                continue;
+            }
+
+        }
+
+        // --- Check All ---
+
+        // Looping Projects GCP
+        foreach ($ce_mapped_data_db as $key_ce_mapped_data_db => $value_ce_mapped_data_db) {
+
+            try {
+                
+                // Looping Setiap VM di Projects
+                foreach ($value_ce_mapped_data_db as $key_ce => $value_ce) {
+                
+                    // Cek Array
+                    try {
+                        
+                        $data_to_check = array_search($value_ce['ce_id'], array_column($ce_mapped_data_server[$key_ce_mapped_data_db], 'id'));    
+
+                        // Jika Tidak ada di Cloud
+                        if ($data_to_check === false) {
+                            array_push($ce_to_delete, $value_ce['ce_id']);
+                        }              
+
+                    } catch (\Throwable $th) {
+                        continue;
+                    }
+
+                }
+
+            } catch (\Throwable $th) {
+                continue;
+            }
+            
+
+        }
+
+
+        // Update to DB for Deleted
+
+        DB::beginTransaction();
+
+        try {
+            
+            // Update Deleted to DB
+            foreach ($ce_to_delete as $key => $value) {
+                
+                // Get Server from DB
+                $db_to_update = ServerGcp::where('ce_id', $value)->first();
+                $db_to_update->status = "DELETED";
+
+                // Save
+                $db_to_update->save();
+
+            }
+
+            // Jika Semua Normal, Commit ke DB
+            DB::commit(); 
+
+        } catch (\Throwable $th) {
+            // Jika ada yang Gagal, Rollback DB
+            DB::rollBack();
+
+            Log::error('ERROR - GCP - Update Deleted CE', (array)$e->getMessage());
+        }
+
+        // Return
+        return back()->with('pesan', 'Berhasil Sync Deleted Data !');
+        
     }
 
     // --- GCP Cloud SQL ---
@@ -298,6 +388,99 @@ class ReportController extends Controller
         // Return
         return back()->with('pesan', 'Berhasil Sync Data !');
 
+    }
+
+    public function gcp_csql_sync_del()
+    {
+
+        $data_project = LokasiGcp::all();
+        $csql_mapped_data_server = [];
+        $csql_mapped_data_db = [];
+
+        $csql_to_delete = [];
+
+        // Sync CSQL
+        foreach ($data_project as $key_project => $value_project) {
+            
+            try {
+                $csql_data_server = $this->gcp_get_all_csql($value_project->id_project);
+                $csql_mapped_data_server[$value_project->id_project] = $csql_data_server;
+                
+                $csql_data_db = CloudSqlGcp::where('lokasi_gcp_id', $value_project->id)->get()->toArray();
+                $csql_mapped_data_db[$value_project->id_project] = $csql_data_db;
+                
+            } catch (\Throwable $th) {
+                continue;
+            }
+
+        }
+
+
+        // --- Check All ---
+
+        // Looping Projects GCP
+        foreach ($csql_mapped_data_db as $key_csql_mapped_data_db => $value_csql_mapped_data_db) {
+
+            try {
+                
+                // Looping Setiap VM di Projects
+                foreach ($value_csql_mapped_data_db as $key_csql => $value_csql) {
+                
+                    // Cek Array
+                    try {
+                        
+                        $data_to_check = array_search($value_csql['nama'], array_column($csql_mapped_data_server[$key_csql_mapped_data_db], 'name'));    
+
+                        // Jika Tidak ada di Cloud
+                        if ($data_to_check === false) {
+                            array_push($csql_to_delete, $value_csql['nama']);
+                        }              
+
+                    } catch (\Throwable $th) {
+                        continue;
+                    }
+
+                }
+
+            } catch (\Throwable $th) {
+                continue;
+            }
+            
+
+        }
+
+
+        // Update to DB for Deleted
+
+        DB::beginTransaction();
+
+        try {
+            
+            // Update Deleted to DB
+            foreach ($csql_to_delete as $key => $value) {
+                
+                // Get Server from DB
+                $db_to_update = ServerGcp::where('nama', $value)->first();
+                $db_to_update->status = "DELETED";
+
+                // Save
+                $db_to_update->save();
+
+            }
+
+            // Jika Semua Normal, Commit ke DB
+            DB::commit(); 
+
+        } catch (\Throwable $th) {
+            // Jika ada yang Gagal, Rollback DB
+            DB::rollBack();
+
+            Log::error('ERROR - GCP - Update Deleted Cloud SQL', (array)$e->getMessage());
+        }
+
+        // Return
+        return back()->with('pesan', 'Berhasil Sync Deleted Data !');
+        
     }
 
     public function gcp_index(Request $request)
