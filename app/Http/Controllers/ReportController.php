@@ -502,6 +502,11 @@ class ReportController extends Controller
 
         $set_pagination = $request->get('set_pagination');
 
+        // Sum Aggregates 
+        $total_cpu_used = 0;
+        $total_ram_used = 0;
+        $total_disk_used = 0;
+
         if ($cari_layanan == 'Compute Engine') {
 
             // Semua CD
@@ -549,6 +554,19 @@ class ReportController extends Controller
                 $tipe_sort,
                 $var_sort
             ));
+
+            // Sum Resources
+            $total_cpu_used = DB::table('server_gcp')
+                                ->where('status', 'running')
+                                ->sum("v_cpu");
+            
+            $total_ram_used = DB::table('server_gcp')
+                                ->where('status', 'running')
+                                ->sum("ram");
+            
+            $total_disk_used = DB::table('server_gcp')
+                                ->where('status', 'running')
+                                ->sum("disk");
 
         } elseif ($cari_layanan == 'Cloud SQL') {
             
@@ -598,20 +616,22 @@ class ReportController extends Controller
                 $var_sort
             ));
 
+            // Sum Resources
+            $total_cpu_used = DB::table('csql_gcp')
+                                ->where('status', 'runnable')
+                                ->sum("v_cpu");
+            
+            $total_ram_used = DB::table('csql_gcp')
+                                ->where('status', 'runnable')
+                                ->sum("ram");
+            
+            $total_disk_used = DB::table('csql_gcp')
+                                ->where('status', 'runnable')
+                                ->sum("disk");
+
         } 
 
-        // Sum Resources
-        $total_cpu_used = DB::table('server_gcp')
-                            ->where('status', 'running')
-                            ->sum("v_cpu");
         
-        $total_ram_used = DB::table('server_gcp')
-                            ->where('status', 'running')
-                            ->sum("ram");
-        
-        $total_disk_used = DB::table('server_gcp')
-                            ->where('status', 'running')
-                            ->sum("disk");
 
         
          return view('report.gcp', compact(
