@@ -483,6 +483,7 @@ class ReportController extends Controller
         
     }
 
+    // GCP Index
     public function gcp_index(Request $request)
     {
         $data_semua_ce    = null;
@@ -599,6 +600,19 @@ class ReportController extends Controller
 
         } 
 
+        // Sum Resources
+        $total_cpu_used = DB::table('server_gcp')
+                            ->where('status', 'running')
+                            ->sum("v_cpu");
+        
+        $total_ram_used = DB::table('server_gcp')
+                            ->where('status', 'running')
+                            ->sum("ram");
+        
+        $total_disk_used = DB::table('server_gcp')
+                            ->where('status', 'running')
+                            ->sum("disk");
+
         
          return view('report.gcp', compact(
             'data_semua_ce',
@@ -612,7 +626,11 @@ class ReportController extends Controller
 
             'tipe_sort',
             'var_sort',
-            'set_pagination'
+            'set_pagination',
+
+            'total_cpu_used',
+            'total_ram_used',
+            'total_disk_used'
         ));
         
     }
