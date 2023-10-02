@@ -101,7 +101,7 @@ class ReportController extends Controller
         return $responseJSONencoded;
     }
     
-    public function gcp_ce_sync()
+    public function gcp_ce_sync(Reqeuest $request)
     {
 
         $transport = (new OtlpHttpTransportFactory())->create(env('OTEL_EXPORTER_OTLP_ENDPOINT'), 'application/x-protobuf');
