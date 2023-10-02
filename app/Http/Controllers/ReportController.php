@@ -24,6 +24,11 @@ use GuzzleHttp\HandlerStack;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 
+use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
+use OpenTelemetry\Contrib\Otlp\SpanExporter;
+use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
+use OpenTelemetry\SDK\Trace\TracerProvider;
+
 class ReportController extends Controller
 {
 
@@ -99,78 +104,117 @@ class ReportController extends Controller
     public function gcp_ce_sync()
     {
 
-        $data_project = LokasiGcp::all();
-        $ce_mapped_data = [];
+        $transport = (new OtlpHttpTransportFactory())->create(env('OTEL_EXPORTER_OTLP_ENDPOINT'), 'application/x-protobuf');
+        $exporter = new SpanExporter($transport);
 
-        // Sync CE
-        foreach ($data_project as $key_project => $value_project) {
-            
-            try {
-                $ce_data = $this->gcp_get_all_ce($value_project->id_project);
-                $ce_mapped_data[$value_project->id_project] = $ce_data;
-            } catch (\Throwable $th) {
-                continue;
-            }
+        $tracerProvider =  new TracerProvider(
+            new SimpleSpanProcessor(
+                $exporter
+            )
+        );
+        $tracer = $tracerProvider->getTracer('io.signoz.examples.php');
 
-        }
+        $root = $span = $tracer->spanBuilder('root')->startSpan();
+        $scope = $span->activate();
 
-        // Save CE to DB
 
-        // Proses Simpan ke DB
-        DB::beginTransaction();
 
         try {
-            
-            foreach ($ce_mapped_data as $key_ce => $value_ce) {
+
+            $childSpan1 = $tracer->spanBuilder('sync gcp ce ')->startSpan();
+
+            $childSpan1->setAttribute('request_method', $request->method());
+            $childSpan1->setAttribute('request_path', $request->path());
+
+            $data_project = LokasiGcp::all();
+            $ce_mapped_data = [];
+
+            // Sync CE
+            foreach ($data_project as $key_project => $value_project) {
                 
-
-                $get_id_project = LokasiGcp::where('id_project', $key_ce)->first();
-
-                foreach ($value_ce as $key_sub_ce => $value_sub_ce) {
-                    
-                    // Prepare Data
-
-                    $machine_type = $this->gcp_get_ce_type($value_sub_ce->machineType);
-
-
-                    // Upsert
-
-                    $data = ServerGcp::updateOrCreate(
-                        // Cek Variable
-                        [
-                            'ce_id' => $value_sub_ce->id
-                        ],
-                        // Simpan Sisa/Semua
-                        [
-                            'lokasi_gcp_id'     => $get_id_project->id,
-                            'nama'              => $value_sub_ce->name,
-                            'tipe'              => $machine_type->name,
-                            'priv_ip'           => $value_sub_ce->networkInterfaces[0]->networkIP,
-                            'pub_ip'            => $value_sub_ce->networkInterfaces[0]->accessConfigs[0]->natIP ?? 'Tidak Ada',
-                            'v_cpu'             => $machine_type->guestCpus,
-                            'ram'               => $machine_type->memoryMb / 1024,
-                            'disk'              => $value_sub_ce->disks[0]->diskSizeGb,
-                            'status'            => $value_sub_ce->status,
-                            'dibuat'            => $value_sub_ce->creationTimestamp
-                        ]
-                    );
-
+                try {
+                    $ce_data = $this->gcp_get_all_ce($value_project->id_project);
+                    $ce_mapped_data[$value_project->id_project] = $ce_data;
+                } catch (\Throwable $th) {
+                    continue;
                 }
 
-            };
+            }
 
-            // Jika Semua Normal, Commit ke DB
-            DB::commit(); 
-            
+            // Save CE to DB
+
+            // Proses Simpan ke DB
+            DB::beginTransaction();
+
+            try {
+                
+                foreach ($ce_mapped_data as $key_ce => $value_ce) {
+                    
+
+                    $get_id_project = LokasiGcp::where('id_project', $key_ce)->first();
+
+                    foreach ($value_ce as $key_sub_ce => $value_sub_ce) {
+                        
+                        // Prepare Data
+
+                        $machine_type = $this->gcp_get_ce_type($value_sub_ce->machineType);
+
+
+                        // Upsert
+
+                        $data = ServerGcp::updateOrCreate(
+                            // Cek Variable
+                            [
+                                'ce_id' => $value_sub_ce->id
+                            ],
+                            // Simpan Sisa/Semua
+                            [
+                                'lokasi_gcp_id'     => $get_id_project->id,
+                                'nama'              => $value_sub_ce->name,
+                                'tipe'              => $machine_type->name,
+                                'priv_ip'           => $value_sub_ce->networkInterfaces[0]->networkIP,
+                                'pub_ip'            => $value_sub_ce->networkInterfaces[0]->accessConfigs[0]->natIP ?? 'Tidak Ada',
+                                'v_cpu'             => $machine_type->guestCpus,
+                                'ram'               => $machine_type->memoryMb / 1024,
+                                'disk'              => $value_sub_ce->disks[0]->diskSizeGb,
+                                'status'            => $value_sub_ce->status,
+                                'dibuat'            => $value_sub_ce->creationTimestamp
+                            ]
+                        );
+
+                    }
+
+                };
+
+                // Jika Semua Normal, Commit ke DB
+                DB::commit(); 
+                
+            } catch (\Exception $e) {
+                // Jika ada yang Gagal, Rollback DB
+                DB::rollBack();
+
+                $childSpan1->recordException($e);
+                Log::error('ERROR - GCP - Save Get CE', (array)$e->getMessage());
+                
+            } finally {
+                $childSpan1->end();
+            }
+
+            // Return
+            return back()->with('pesan', 'Berhasil Sync Data !');
         } catch (\Exception $e) {
-            // Jika ada yang Gagal, Rollback DB
-            DB::rollBack();
+            $span->recordException($e);
+            Log::error($e->getMessage());
+            throw $e;
+        } finally {
+            // Always end the span to avoid leaks
+            $span->end();
 
-            Log::error('ERROR - GCP - Save Get CE', (array)$e->getMessage());
+            $root->end();
+            $scope->detach();
+
+            $tracerProvider->shutdown();
         }
-
-        // Return
-        return back()->with('pesan', 'Berhasil Sync Data !');
 
 
     }

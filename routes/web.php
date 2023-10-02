@@ -26,7 +26,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 
 // No Prefix and Auth Middleware
-Route::middleware(['auth', 'verified', 'signoz'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 
     
 
