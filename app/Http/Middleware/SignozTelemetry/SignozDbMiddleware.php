@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-
+use OpenTelemetry\SDK\Trace\Tracer;
 use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
 use OpenTelemetry\Contrib\Otlp\SpanExporter;
 use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
@@ -18,7 +18,7 @@ class SignozDbMiddleware
 
     protected $tracer;
 
-    public function __construct($tracer)
+    public function __construct(Tracer $tracer)
     {
         $this->tracer = $tracer;
     }
