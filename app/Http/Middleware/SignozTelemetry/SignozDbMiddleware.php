@@ -16,12 +16,6 @@ use OpenTelemetry\SDK\Trace\TracerProvider;
 class SignozDbMiddleware
 {
 
-    protected $tracer;
-
-    public function __construct(Tracer $tracer)
-    {
-        $this->tracer = $tracer;
-    }
 
     /**
      * Handle an incoming request.
@@ -32,6 +26,16 @@ class SignozDbMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+         $transport = (new OtlpHttpTransportFactory())->create(env('OTEL_EXPORTER_OTLP_ENDPOINT'), 'application/x-protobuf');
+        $exporter = new SpanExporter($transport);
+
+
+        $tracerProvider =  new TracerProvider(
+            new SimpleSpanProcessor(
+                $exporter
+            )
+        );
+        $tracer = $tracerProvider->getTracer('io.signoz.examples.php');
 
         $dbSpan = $tracer->spanBuilder('db_query')->startSpan();
 
