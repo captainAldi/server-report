@@ -5,13 +5,20 @@ namespace App\Http\Middleware\SignozTelemetry;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+
+use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
+use OpenTelemetry\Contrib\Otlp\SpanExporter;
+use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
+use OpenTelemetry\SDK\Trace\TracerProvider;
 
 class SignozDbMiddleware
 {
 
     protected $tracer;
 
-    public function __construct(Tracer $tracer)
+    public function __construct($tracer)
     {
         $this->tracer = $tracer;
     }
