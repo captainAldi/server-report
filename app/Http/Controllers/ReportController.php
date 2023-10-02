@@ -99,102 +99,79 @@ class ReportController extends Controller
     public function gcp_ce_sync()
     {
 
+        $data_project = LokasiGcp::all();
+        $ce_mapped_data = [];
 
-
-        try {
-
-
-
-            $data_project = LokasiGcp::all();
-            $ce_mapped_data = [];
-
-            // Sync CE
-            foreach ($data_project as $key_project => $value_project) {
-                
-                try {
-                    $ce_data = $this->gcp_get_all_ce($value_project->id_project);
-                    $ce_mapped_data[$value_project->id_project] = $ce_data;
-                } catch (\Throwable $th) {
-                    continue;
-                }
-
-            }
-
-            // Save CE to DB
-
-            // Proses Simpan ke DB
-            DB::beginTransaction();
-
+        // Sync CE
+        foreach ($data_project as $key_project => $value_project) {
+            
             try {
-                
-                foreach ($ce_mapped_data as $key_ce => $value_ce) {
-                    
-
-                    $get_id_project = LokasiGcp::where('id_project', $key_ce)->first();
-
-                    foreach ($value_ce as $key_sub_ce => $value_sub_ce) {
-                        
-                        // Prepare Data
-
-                        $machine_type = $this->gcp_get_ce_type($value_sub_ce->machineType);
-
-
-                        // Upsert
-
-                        $data = ServerGcp::updateOrCreate(
-                            // Cek Variable
-                            [
-                                'ce_id' => $value_sub_ce->id
-                            ],
-                            // Simpan Sisa/Semua
-                            [
-                                'lokasi_gcp_id'     => $get_id_project->id,
-                                'nama'              => $value_sub_ce->name,
-                                'tipe'              => $machine_type->name,
-                                'priv_ip'           => $value_sub_ce->networkInterfaces[0]->networkIP,
-                                'pub_ip'            => $value_sub_ce->networkInterfaces[0]->accessConfigs[0]->natIP ?? 'Tidak Ada',
-                                'v_cpu'             => $machine_type->guestCpus,
-                                'ram'               => $machine_type->memoryMb / 1024,
-                                'disk'              => $value_sub_ce->disks[0]->diskSizeGb,
-                                'status'            => $value_sub_ce->status,
-                                'dibuat'            => $value_sub_ce->creationTimestamp
-                            ]
-                        );
-
-                    }
-
-                };
-
-                // Jika Semua Normal, Commit ke DB
-                DB::commit(); 
-                
-            } catch (\Exception $e) {
-                // Jika ada yang Gagal, Rollback DB
-                DB::rollBack();
-
-                $childSpan1->recordException($e);
-                Log::error('ERROR - GCP - Save Get CE', (array)$e->getMessage());
-                
-            } finally {
-                $childSpan1->end();
+                $ce_data = $this->gcp_get_all_ce($value_project->id_project);
+                $ce_mapped_data[$value_project->id_project] = $ce_data;
+            } catch (\Throwable $th) {
+                continue;
             }
 
-            // Return
-            return back()->with('pesan', 'Berhasil Sync Data !');
-        } catch (\Exception $e) {
-            $span->recordException($e);
-            Log::error($e->getMessage());
-            throw $e;
-        } finally {
-            // Always end the span to avoid leaks
-            $span->end();
-
-            $root->end();
-            $scope->detach();
-
-            $tracerProvider->shutdown();
         }
 
+        // Save CE to DB
+
+        // Proses Simpan ke DB
+        DB::beginTransaction();
+
+        try {
+            
+            foreach ($ce_mapped_data as $key_ce => $value_ce) {
+                
+
+                $get_id_project = LokasiGcp::where('id_project', $key_ce)->first();
+
+                foreach ($value_ce as $key_sub_ce => $value_sub_ce) {
+                    
+                    // Prepare Data
+
+                    $machine_type = $this->gcp_get_ce_type($value_sub_ce->machineType);
+
+
+                    // Upsert
+
+                    $data = ServerGcp::updateOrCreate(
+                        // Cek Variable
+                        [
+                            'ce_id' => $value_sub_ce->id
+                        ],
+                        // Simpan Sisa/Semua
+                        [
+                            'lokasi_gcp_id'     => $get_id_project->id,
+                            'nama'              => $value_sub_ce->name,
+                            'tipe'              => $machine_type->name,
+                            'priv_ip'           => $value_sub_ce->networkInterfaces[0]->networkIP,
+                            'pub_ip'            => $value_sub_ce->networkInterfaces[0]->accessConfigs[0]->natIP ?? 'Tidak Ada',
+                            'v_cpu'             => $machine_type->guestCpus,
+                            'ram'               => $machine_type->memoryMb / 1024,
+                            'disk'              => $value_sub_ce->disks[0]->diskSizeGb,
+                            'status'            => $value_sub_ce->status,
+                            'dibuat'            => $value_sub_ce->creationTimestamp
+                        ]
+                    );
+
+                }
+
+            };
+
+            // Jika Semua Normal, Commit ke DB
+            DB::commit(); 
+            
+        } catch (\Exception $e) {
+            // Jika ada yang Gagal, Rollback DB
+            DB::rollBack();
+
+            Log::error('ERROR - GCP - Save Get CE', (array)$e->getMessage());
+            
+        } 
+
+        // Return
+        return back()->with('pesan', 'Berhasil Sync Data !');
 
     }
 
