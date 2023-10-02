@@ -38,6 +38,9 @@ class SignozMiddleware
         $root = $span = $tracer->spanBuilder('root')->startSpan();
         $scope = $span->activate();
 
+        $span->setAttribute('request_method', $request->method());
+        $span->setAttribute('request_path', $request->path());
+
         try {
             // Execute the next middleware in the pipeline and the controller
             $response = $next($request);
