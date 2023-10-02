@@ -23,7 +23,7 @@ class SignozMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        $transport = (new OtlpHttpTransportFactory())->create($otlpHttpEndpoint, 'application/x-protobuf');
+        $transport = (new OtlpHttpTransportFactory())->create(env('OTEL_EXPORTER_OTLP_ENDPOINT'), 'application/x-protobuf');
         $exporter = new SpanExporter($transport);
 
         echo 'Starting OTLP example';
