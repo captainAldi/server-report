@@ -24,11 +24,6 @@ use GuzzleHttp\HandlerStack;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 
-use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
-use OpenTelemetry\Contrib\Otlp\SpanExporter;
-use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
-use OpenTelemetry\SDK\Trace\TracerProvider;
-
 class ReportController extends Controller
 {
 
@@ -101,30 +96,14 @@ class ReportController extends Controller
         return $responseJSONencoded;
     }
     
-    public function gcp_ce_sync(Request $request)
+    public function gcp_ce_sync()
     {
-
-        $transport = (new OtlpHttpTransportFactory())->create(env('OTEL_EXPORTER_OTLP_ENDPOINT'), 'application/x-protobuf');
-        $exporter = new SpanExporter($transport);
-
-        $tracerProvider =  new TracerProvider(
-            new SimpleSpanProcessor(
-                $exporter
-            )
-        );
-        $tracer = $tracerProvider->getTracer('io.signoz.examples.php');
-
-        $root = $span = $tracer->spanBuilder('root')->startSpan();
-        $scope = $span->activate();
 
 
 
         try {
 
-            $childSpan1 = $tracer->spanBuilder('sync gcp ce ')->startSpan();
 
-            $childSpan1->setAttribute('request_method', $request->method());
-            $childSpan1->setAttribute('request_path', $request->path());
 
             $data_project = LokasiGcp::all();
             $ce_mapped_data = [];
