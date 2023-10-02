@@ -3,6 +3,16 @@
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 
+use GuzzleHttp\Client;
+use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
+use OpenTelemetry\Contrib\Otlp\SpanExporter;
+use OpenTelemetry\SDK\Common\Attribute\Attributes;
+use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
+use OpenTelemetry\SDK\Trace\TracerProvider;
+
+use OpenTelemetry\SDK\Trace\TracerProviderFactory;
+
+
 define('LARAVEL_START', microtime(true));
 
 /*
@@ -32,6 +42,24 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 */
 
 require __DIR__.'/../vendor/autoload.php';
+
+// Tambahan untuk signoz
+$transport = (new OtlpHttpTransportFactory())->create('http://' . env("OTEL_EXPORTER_OTLP_ENDPOINT") . ':4318/v1/traces', 'application/x-protobuf');
+
+$tracerProvider =  new TracerProvider(
+    new SimpleSpanProcessor(
+        new SpanExporter($transport)
+    )
+);
+$tracer = $tracerProvider->getTracer('io.signoz.php.example');
+
+$root = $span = $tracer->spanBuilder('root')->startSpan();
+$scope = $span->activate();
+
+
+$span->end();
+$root->end();
+$scope->detach();
 
 /*
 |--------------------------------------------------------------------------
