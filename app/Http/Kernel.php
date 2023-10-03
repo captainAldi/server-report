@@ -22,8 +22,8 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         // Baru
-        \App\Http\Middleware\SignozTelemetry\SignozTelemetry::class,
-        \App\Http\Middleware\SignozTelemetry\SignozDbMiddleware::class
+        // \App\Http\Middleware\SignozTelemetry\SignozTelemetry::class,
+        // \App\Http\Middleware\SignozTelemetry\SignozDbMiddleware::class
     ];
 
     /**

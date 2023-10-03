@@ -3,6 +3,13 @@
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\Log;
+
+use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
+use OpenTelemetry\Contrib\Otlp\SpanExporter;
+use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
+use OpenTelemetry\SDK\Trace\TracerProvider;
+
 
 define('LARAVEL_START', microtime(true));
 
@@ -34,6 +41,22 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 
 require __DIR__.'/../vendor/autoload.php';
 
+// Otel
+
+$transport = (new OtlpHttpTransportFactory())->create(env('OTEL_EXPORTER_OTLP_ENDPOINT'), 'application/x-protobuf');
+$exporter = new SpanExporter($transport);
+
+
+$tracerProvider =  new TracerProvider(
+    new SimpleSpanProcessor(
+        $exporter
+    )
+);
+
+$scope = \OpenTelemetry\API\Instrumentation\Configurator::create()
+    ->withTracerProvider($tracerProvider)
+    ->activate();
+
 
 /*
 |--------------------------------------------------------------------------
@@ -55,3 +78,6 @@ $response = $kernel->handle(
 )->send();
 
 $kernel->terminate($request, $response);
+
+$scope->detach();
+$tracerProvider->shutdown();
