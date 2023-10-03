@@ -50,7 +50,7 @@ ADD ./ /var/www/html
 RUN cd /var/www/html && composer install --no-dev
 
 # Otel
-RUN compose require open-telemetry/opentelemetry-auto-laravel
+RUN composer require open-telemetry/opentelemetry-auto-laravel
 
 # chown
 RUN chown -R www-data:www-data /var/www/html/storage
