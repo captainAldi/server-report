@@ -126,6 +126,13 @@
                 <a href="{{ route('get.report.usage.proxmox.detail', $server->id) }}" class="btn btn-info" aria-disabled=""> 
                   <i class="fa fa-eye"></i>
                 </a>
+
+                @if ($server->status == 'stopped')
+                  <a href="{{ route('get.proxmox.start-vm', ['id_node' => $server->lokasi_proxmox_id, 'id_vm' => $server->vm_id]) }}" class="btn btn-info" aria-disabled=""> 
+                    {{-- <i class="fa fa-eye"></i> --}}
+                    Start
+                  </a>
+                @endif
               </td>
             </tr>
 

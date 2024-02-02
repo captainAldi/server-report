@@ -900,6 +900,36 @@ class ReportController extends Controller
         ));
     }
 
+    public function proxmox_start_vm($id_node, $id_vm)
+    {
+        // Get Data Node
+        $data_node = LokasiProxmox::where('id', $id_node)->first();
+
+         // Auth to Node
+        $data_auth = [
+            'ip'    => $data_node->ip_node,
+            'port'  => $data_node->port_node,
+            'auth'  => Crypt::decryptString($data_node->token),
+            'node'  => $data_node->nama_node
+        ];
+
+        // Fetch Data to Bunker
+        $client = new Client([
+            'base_uri' => 'https://' . $data_auth['ip'] . ':' . $data_auth['port'],
+            'verify' => false,
+            'headers' => [
+                'Authorization' => $data_auth['auth']
+            ],
+        ]);
+
+        $endpoint = 'api2/json/nodes/' . $data_auth['node'] . '/qemu/' . $id_vm . '/status/start';
+
+        $response = $client->post($endpoint);
+        $responseJSONencoded = json_decode($response->getBody())->data;
+
+        return back()->with('pesan', 'berhasil hidupkan vm !');
+    }
+
     
     // Tes Ajaaaa
     

@@ -23,6 +23,7 @@ Auth::routes(['verify' => true]);
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // Route::get('tes-vpc', [App\Http\Controllers\ReportController::class, 'gcp_ce_sync_vpc']);
+Route::get('tes-start-125', [App\Http\Controllers\ReportController::class, 'proxmox_start_vm']);
 
 
 // No Prefix and Auth Middleware
@@ -56,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('report/usage/gcp/csql/excel', [App\Http\Controllers\ReportController::class, 'gcp_csql_excel'])->name('get.report.usage.gcp.csql.excel');
 
     Route::get('report/usage/proxmox/vm/sync', [App\Http\Controllers\ReportController::class, 'proxmox_vm_sync'])->name('get.report.usage.proxmox.vm.sync');
+    Route::get('report/usage/proxmox/node/{id_node}/vm/{id_vm}', [App\Http\Controllers\ReportController::class, 'proxmox_start_vm'])->name('get.proxmox.start-vm');
 
     
     
