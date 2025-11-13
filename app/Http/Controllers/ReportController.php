@@ -679,6 +679,20 @@ class ReportController extends Controller
         return Excel::download(new CloudSqlGcpExport($cari_nama, $cari_lokasi, $cari_status), 'csql-report-' . $date . '.xlsx');
     }
 
+    public function gcp_ce_detail($id)
+    {
+        $data_server = ServerGcp::with('lokasi_gcp')->findOrFail($id);
+        
+        return view('report.gcp-ce-detail', compact('data_server'));
+    }
+
+    public function gcp_csql_detail($id)
+    {
+        $data_server = CloudSqlGcp::with('lokasi_gcp')->findOrFail($id);
+        
+        return view('report.gcp-csql-detail', compact('data_server'));
+    }
+
     //  --- Proxmox Infra ---
 
     public function getTimeSeriesData($id_node, $node_name, $vm_id)
@@ -928,6 +942,13 @@ class ReportController extends Controller
         $responseJSONencoded = json_decode($response->getBody())->data;
 
         return back()->with('pesan', 'berhasil hidupkan vm !');
+    }
+
+    public function proxmox_detail($id)
+    {
+        $data_server = ServerProxmox::with('lokasi_proxmox')->findOrFail($id);
+        
+        return view('report.proxmox-detail', compact('data_server'));
     }
 
     

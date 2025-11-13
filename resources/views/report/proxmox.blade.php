@@ -119,7 +119,7 @@
               <td>{{ $server->ram }}</td>
               <td>{{ $server->disk }}</td>
               <td>{{ $server->status }}</td>
-              <td>{{ $server->dibuat }}</td>
+              <td>{{ $server->created_at->format('d M Y, H:i') }}</td>
 
               <td class="text-nowrap">
                 <!-- Detail -->
