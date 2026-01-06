@@ -45,11 +45,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
       </li>
       <li class="nav-item d-none d-sm-inline-block">
-        @if(Auth::user()->role == "admin")
-          <a href="{{ route('get.admin.home') }}" class="nav-link">Home</a>
-        @elseif(Auth::user()->role == "staff")
-          <a href="{{ route('get.staff.home') }}" class="nav-link">Home</a>
-        @endif
+        <a href="{{ route('home') }}" class="nav-link">Home</a>
       </li>
 
       <!-- Dark Mode Swithcer -->
@@ -183,6 +179,17 @@ scratch. This page gets rid of all links and provides the needed markup only.
                
               </ul>
             </li>
+
+            <!-- User Management (Admin Only) -->
+            @if(auth()->user()->role == 'admin')
+            <li class="nav-item">
+              <a href="{{ route('get.user.index') }}"
+                 class="nav-link {{ request()->is('user*') ? 'active' : '' }}">
+                <i class="nav-icon fas fa-users"></i>
+                <p>Manajemen User</p>
+              </a>
+            </li>
+            @endif
 
           </ul>
         </nav>
