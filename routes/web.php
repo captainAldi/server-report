@@ -60,8 +60,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('report/usage/proxmox/vm/sync', [App\Http\Controllers\ReportController::class, 'proxmox_vm_sync'])->name('get.report.usage.proxmox.vm.sync');
     Route::get('report/usage/proxmox/node/{id_node}/vm/{id_vm}', [App\Http\Controllers\ReportController::class, 'proxmox_start_vm'])->name('get.proxmox.start-vm');
 
-    
-    
+    // User Management (Admin Only)
+    Route::middleware(['admin'])->group(function () {
+        Route::get('user', [App\Http\Controllers\UserController::class, 'user_index'])->name('get.user.index');
+        Route::get('user/create', [App\Http\Controllers\UserController::class, 'user_create'])->name('get.user.create');
+        Route::post('user/save', [App\Http\Controllers\UserController::class, 'user_proses_simpan'])->name('post.user.proses-simpan');
+        Route::get('user/edit/{id}', [App\Http\Controllers\UserController::class, 'user_edit'])->name('get.user.edit');
+        Route::patch('user/update/{id}', [App\Http\Controllers\UserController::class, 'user_proses_ubah'])->name('patch.user.proses-ubah');
+        Route::delete('user/delete/{id}', [App\Http\Controllers\UserController::class, 'user_proses_hapus'])->name('delete.user.proses-hapus');
+    });
 
     // Report History
     Route::get('report/history', [App\Http\Controllers\ReportController::class, 'history_index'])->name('get.report.history');
