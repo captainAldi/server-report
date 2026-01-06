@@ -1,8 +1,8 @@
-FROM php:8.1-fpm-buster
+FROM php:8.1-fpm-bullseye
 LABEL maintainer="renaldiyulvianda@yahoo.com"
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
   zip \
   unzip \
   nginx \
@@ -14,8 +14,9 @@ RUN apt-get update && apt-get install -y \
   libpng-dev \
   libjpeg-dev \
   libfreetype6-dev \
-  # zip
-  libzip-dev
+  libzip-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # OpenTelemetry
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
@@ -24,9 +25,6 @@ RUN chmod +x /usr/local/bin/install-php-extensions && \
   install-php-extensions gd xdebug
   
 RUN install-php-extensions opentelemetry
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install \
