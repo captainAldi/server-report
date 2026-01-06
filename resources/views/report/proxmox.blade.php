@@ -15,6 +15,66 @@
 
 @section('content')
 
+@if ($cari_node != '')
+<div class="row">
+  <div class="col">
+
+    <!-- small card -->
+    <div class="small-box bg-info">
+        <div class="inner">
+          <h3>{{ $total_cpu_used }}</h3>
+
+          <p>Total CPU Used (vCPU)</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+
+        <a href="#" class="small-box-footer">
+          More info <i class="fas fa-arrow-circle-right"></i>
+        </a>
+    </div>
+
+  </div>
+
+  <div class="col">
+    <!-- small card -->
+    <div class="small-box bg-info">
+        <div class="inner">
+          <h3>{{ number_format($total_ram_used, 2) }}</h3>
+
+          <p>Total RAM Used (GB)</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+
+        <a href="#" class="small-box-footer">
+          More info <i class="fas fa-arrow-circle-right"></i>
+        </a>
+    </div>
+  </div>
+
+  <div class="col">
+    <!-- small card -->
+    <div class="small-box bg-info">
+        <div class="inner">
+          <h3>{{ number_format($total_disk_used, 2) }}</h3>
+
+          <p>Total Disk Used (GB)</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+
+        <a href="#" class="small-box-footer">
+          More info <i class="fas fa-arrow-circle-right"></i>
+        </a>
+    </div>
+  </div>
+</div>
+@endif
+
 <div class="card">
   <div class="card-header">
     <h3 class="class-title">Server</h3>
@@ -27,7 +87,7 @@
   </div>
 
 
-  <form action="{{ route('get.report.usage.proxmox') }}" method="get">
+  <form id="form-filter" action="{{ route('get.report.usage.proxmox') }}" method="get">
 
     <div class="row ml-2 mb-2">
 
@@ -48,6 +108,12 @@
         <button type="submit" class="btn btn-primary">Apply</button>
 
         <a href="{{ route('get.report.usage.proxmox') }}" class="btn btn-primary ml-3">Refresh</a>
+
+        @if (!empty($cari_node))
+          <button class="btn btn-success" onclick="exportToExcel()" type="button">
+            <i class="fa-solid fa-file-excel"></i>
+          </button>
+        @endif
       </div>
 
     </div>
@@ -182,5 +248,16 @@
 @endsection
 
 @push('scripts')
+<script>
 
+  // Manipulate Form-Filter
+  let formFilter = document.getElementById("form-filter");
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+
+  function exportToExcel() {
+    formFilter.action = "{{ route('get.report.usage.proxmox.excel') }}"
+    formFilter.submit();
+  };
+</script>
 @endpush
