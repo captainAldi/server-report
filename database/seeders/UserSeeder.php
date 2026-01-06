@@ -17,24 +17,28 @@ class UserSeeder extends Seeder
                 'email' => 'admin@serverreport.com',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => Carbon::now(),
+                'role' => 'admin',
             ],
             [
                 'name' => 'Test User',
                 'email' => 'test@serverreport.com',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => Carbon::now(),
+                'role' => 'staff',
             ],
             [
                 'name' => 'John Doe',
                 'email' => 'john@example.com',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => Carbon::now(),
+                'role' => 'staff',
             ],
             [
                 'name' => 'Jane Smith',
                 'email' => 'jane@example.com',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => Carbon::now(),
+                'role' => 'staff',
             ],
         ];
 
@@ -47,5 +51,7 @@ class UserSeeder extends Seeder
 
         $this->command->info('Users seeded successfully!');
         $this->command->info('Default password for all users: password123');
+        $this->command->info('Admin user: admin@serverreport.com (role: admin)');
+        $this->command->info('Staff users: test@serverreport.com, john@example.com, jane@example.com (role: staff)');
     }
 }
