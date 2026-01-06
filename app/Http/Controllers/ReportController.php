@@ -16,6 +16,7 @@ use App\Models\ServerProxmox;
 
 use App\Exports\ServerGcpExport;
 use App\Exports\CloudSqlGcpExport;
+use App\Exports\ServerProxmoxExport;
 
 use Google\Auth\ApplicationDefaultCredentials;
 use GuzzleHttp\Client;
@@ -904,14 +905,49 @@ class ReportController extends Controller
         $data_server = ServerProxmox::where('lokasi_proxmox_id', $cari_node)
                                     ->orderBy('vm_id', 'asc')
                                     ->get();
-                                    
+
         $data_nama_node = LokasiProxmox::all();
+
+        // Sum Resources
+        $total_cpu_used = 0;
+        $total_ram_used = 0;
+        $total_disk_used = 0;
+
+        if ($cari_node != '') {
+            $total_cpu_used = DB::table('server_proxmox')
+                                ->where('lokasi_proxmox_id', $cari_node)
+                                ->where('status', 'running')
+                                ->sum("v_cpu");
+
+            $total_ram_used = DB::table('server_proxmox')
+                                ->where('lokasi_proxmox_id', $cari_node)
+                                ->where('status', 'running')
+                                ->sum("ram");
+
+            $total_disk_used = DB::table('server_proxmox')
+                                ->where('lokasi_proxmox_id', $cari_node)
+                                ->where('status', 'running')
+                                ->sum("disk");
+        }
 
         return view('report.proxmox', compact(
             'data_server',
             'data_nama_node',
-            'cari_node'
+            'cari_node',
+            'total_cpu_used',
+            'total_ram_used',
+            'total_disk_used'
         ));
+    }
+
+    public function proxmox_excel(Request $request)
+    {
+
+        $cari_node = $request->get('cari_node');
+
+        $date = date("Y-m-d_H:i:s");
+
+        return Excel::download(new ServerProxmoxExport($cari_node), 'proxmox-report-' . $date . '.xlsx');
     }
 
     public function proxmox_start_vm($id_node, $id_vm)
