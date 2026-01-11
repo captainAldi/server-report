@@ -122,6 +122,8 @@ class ReportController extends Controller
 
         try {
             
+            $valid_ce_ids = [];
+
             foreach ($ce_mapped_data as $key_ce => $value_ce) {
                 
 
@@ -133,10 +135,11 @@ class ReportController extends Controller
 
                     $machine_type = $this->gcp_get_ce_type($value_sub_ce->machineType);
 
+                    $valid_ce_ids[] = $value_sub_ce->id;
 
                     // Upsert
 
-                    $data = ServerGcp::updateOrCreate(
+                    $data = ServerGcp::withTrashed()->updateOrCreate(
                         // Cek Variable
                         [
                             'ce_id' => $value_sub_ce->id
@@ -156,9 +159,16 @@ class ReportController extends Controller
                         ]
                     );
 
+                    if ($data->trashed()) {
+                        $data->restore();
+                    }
+
                 }
 
             };
+
+            // Soft delete instances that are no longer in GCP
+            ServerGcp::whereNotIn('ce_id', $valid_ce_ids)->delete();
 
             // Jika Semua Normal, Commit ke DB
             DB::commit(); 
@@ -323,6 +333,8 @@ class ReportController extends Controller
 
         try {
             
+            $valid_csql_names = [];
+
             foreach ($csql_mapped_data as $key_csql => $value_csql) {
                 
                 $get_id_project = LokasiGcp::where('id_project', $key_csql)->first();
@@ -331,6 +343,8 @@ class ReportController extends Controller
 
                     foreach ($value_sub_csql as $key_sub_2_csqsl => $value_sub_2_csql) {
                         // Prepare Data
+
+                        $valid_csql_names[] = $value_sub_2_csql->name;
 
                         // vCPU - RAM
                         $tipe_array = explode('-', $value_sub_2_csql->settings->tier);
@@ -352,7 +366,7 @@ class ReportController extends Controller
 
                         // Upsert
 
-                        $data = CloudSqlGcp::updateOrCreate(
+                        $data = CloudSqlGcp::withTrashed()->updateOrCreate(
                             // Cek Variable
                             [
                                 'nama' => $value_sub_2_csql->name
@@ -370,11 +384,18 @@ class ReportController extends Controller
                                 'dibuat'            => $value_sub_2_csql->createTime
                             ]
                         );
+
+                        if ($data->trashed()) {
+                            $data->restore();
+                        }
                     }
 
                 }
 
             };
+
+            // Soft delete Cloud SQL instances that are no longer in GCP
+            CloudSqlGcp::whereNotIn('nama', $valid_csql_names)->delete();
 
             // Jika Semua Normal, Commit ke DB
             DB::commit(); 
@@ -489,7 +510,7 @@ class ReportController extends Controller
     {
         $data_semua_ce    = null;
         $data_semua_csql  = null;
-        $data_semua_lokasi = LokasiGcp::get();
+        $data_semua_lokasi = LokasiGcp::withTrashed()->get();
 
         $cari_layanan   = $request->get('cari_layanan');
 
@@ -511,7 +532,7 @@ class ReportController extends Controller
         if ($cari_layanan == 'Compute Engine') {
 
             // Semua CD
-            $data_semua_ce = ServerGcp::query();
+            $data_semua_ce = ServerGcp::withTrashed();
 
             //Kondisi
             if($cari_nama != '') {
@@ -559,20 +580,23 @@ class ReportController extends Controller
             // Sum Resources
             $total_cpu_used = DB::table('server_gcp')
                                 ->where('status', 'running')
+                                ->whereNull('deleted_at')
                                 ->sum("v_cpu");
             
             $total_ram_used = DB::table('server_gcp')
                                 ->where('status', 'running')
+                                ->whereNull('deleted_at')
                                 ->sum("ram");
             
             $total_disk_used = DB::table('server_gcp')
                                 ->where('status', 'running')
+                                ->whereNull('deleted_at')
                                 ->sum("disk");
 
         } elseif ($cari_layanan == 'Cloud SQL') {
             
             // Semua CloudSQL
-            $data_semua_csql = CloudSqlGcp::query();
+            $data_semua_csql = CloudSqlGcp::withTrashed();
 
             //Kondisi
             if($cari_nama != '') {
@@ -620,14 +644,17 @@ class ReportController extends Controller
             // Sum Resources
             $total_cpu_used = DB::table('csql_gcp')
                                 ->where('status', 'runnable')
+                                ->whereNull('deleted_at')
                                 ->sum("v_cpu");
             
             $total_ram_used = DB::table('csql_gcp')
                                 ->where('status', 'runnable')
+                                ->whereNull('deleted_at')
                                 ->sum("ram");
             
             $total_disk_used = DB::table('csql_gcp')
                                 ->where('status', 'runnable')
+                                ->whereNull('deleted_at')
                                 ->sum("disk");
 
         } 

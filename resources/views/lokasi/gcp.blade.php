@@ -52,10 +52,15 @@
       </thead>
       <tbody>
         @foreach($data_lokasi as $lokasi)
-          <tr>
+          <tr class="{{ $lokasi->trashed() ? 'table-danger' : '' }}">
 
             <td>{{ $loop->iteration }}</td>
-            <td>{{ $lokasi->nama_project }}</td>
+            <td>
+              {{ $lokasi->nama_project }}
+              @if($lokasi->trashed())
+                <span class="badge badge-danger">SOFT DELETED</span>
+              @endif
+            </td>
             <td>{{ $lokasi->id_project }}</td>
             <td>{{ $lokasi->dibuat }}</td>
 

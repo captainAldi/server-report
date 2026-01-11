@@ -224,18 +224,8 @@
               <i class="fa-solid fa-rotate">
               </i>
             </a>
-
-            <a class="btn btn-danger mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.ce.sync.deleted') }}" >
-              <i class="fa-solid fa-rotate">
-              </i>
-            </a>
           @elseif ($cari_layanan == 'Cloud SQL')
             <a class="btn btn-primary mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.csql.sync') }}" >
-              <i class="fa-solid fa-rotate">
-              </i>
-            </a>
-
-            <a class="btn btn-danger mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.csql.sync.deleted') }}" >
               <i class="fa-solid fa-rotate">
               </i>
             </a>
@@ -273,10 +263,15 @@
             </thead>
             <tbody>
               @foreach($data_semua_ce as $server)
-                <tr>
+                <tr class="{{ $server->trashed() ? 'table-danger' : '' }}">
 
                   <td>{{ $loop->iteration + $data_semua_ce->firstItem() - 1 }}</td>
-                  <td>{{ $server->nama }}</td>
+                  <td>
+                    {{ $server->nama }}
+                    @if($server->trashed())
+                      <span class="badge badge-danger">SOFT DELETED</span>
+                    @endif
+                  </td>
                   <td>{{ $server->lokasi_gcp->id_project }}</td>
                   <td>{{ $server->tipe }}</td>
                   <td>{{ $server->priv_ip }}</td>
@@ -328,10 +323,15 @@
               </thead>
               <tbody>
                 @foreach($data_semua_csql as $csql)
-                  <tr>
+                  <tr class="{{ $csql->trashed() ? 'table-danger' : '' }}">
 
                     <td>{{ $loop->iteration + $data_semua_csql->firstItem() - 1 }}</td>
-                    <td>{{ $csql->nama }}</td>
+                    <td>
+                      {{ $csql->nama }}
+                      @if($csql->trashed())
+                        <span class="badge badge-danger">SOFT DELETED</span>
+                      @endif
+                    </td>
                     <td>{{ $csql->lokasi_gcp->id_project }}</td>
                     <td>{{ $csql->tipe }}</td>
                     <td>{{ $csql->pub_ip }}</td>

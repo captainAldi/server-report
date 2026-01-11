@@ -21,7 +21,7 @@ class LokasiController extends Controller
 
     public function gcp_index()
     {
-        $data_lokasi = LokasiGcp::all();
+        $data_lokasi = LokasiGcp::withTrashed()->get();
 
         return view('lokasi.gcp', compact('data_lokasi'));
     }
@@ -62,8 +62,11 @@ class LokasiController extends Controller
 
         try {
             
+            $valid_project_ids = [];
+
             foreach ($responseJSONencoded->projects as $project) {
 
+                $valid_project_ids[] = $project->projectId;
 
                 $data = LokasiGcp::updateOrCreate(
                     // Cek Variable
@@ -77,10 +80,18 @@ class LokasiController extends Controller
                     ]
                 );
 
-                // Jika Semua Normal, Commit ke DB
-                DB::commit(); 
+                // Restore if it was soft deleted
+                if ($data->trashed()) {
+                    $data->restore();
+                }
 
             };
+
+            // Soft Delete projects that are not in the response
+            LokasiGcp::whereNotIn('id_project', $valid_project_ids)->delete();
+            
+            // Jika Semua Normal, Commit ke DB
+            DB::commit(); 
             
         } catch (\Exception $e) {
             // Jika ada yang Gagal, Rollback DB

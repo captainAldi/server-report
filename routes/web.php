@@ -17,8 +17,8 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('awal');
 
-// Add Verify Page to Auth Scaffolding
-Auth::routes(['verify' => true]);
+// Add Verify Page to Auth Scaffolding and Disable Register
+Auth::routes(['verify' => true, 'register' => false]);
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
