@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Crypt;
 use App\Models\LokasiGcp;
 use App\Models\ServerGcp;
 use App\Models\CloudSqlGcp;
+use App\Models\BucketGcp;
 
 use App\Models\LokasiProxmox;
 use App\Models\ServerProxmox;
@@ -17,6 +18,7 @@ use App\Models\ServerProxmox;
 use App\Exports\ServerGcpExport;
 use App\Exports\CloudSqlGcpExport;
 use App\Exports\ServerProxmoxExport;
+use App\Exports\BucketGcpExport;
 
 use Google\Auth\ApplicationDefaultCredentials;
 use GuzzleHttp\Client;
@@ -510,6 +512,7 @@ class ReportController extends Controller
     {
         $data_semua_ce    = null;
         $data_semua_csql  = null;
+        $data_semua_bucket = null;
         $data_semua_lokasi = LokasiGcp::withTrashed()->get();
 
         $cari_layanan   = $request->get('cari_layanan');
@@ -524,7 +527,7 @@ class ReportController extends Controller
 
         $set_pagination = $request->get('set_pagination');
 
-        // Sum Aggregates 
+        // Sum Aggregates
         $total_cpu_used = 0;
         $total_ram_used = 0;
         $total_disk_used = 0;
@@ -657,14 +660,76 @@ class ReportController extends Controller
                                 ->whereNull('deleted_at')
                                 ->sum("disk");
 
-        } 
+        } elseif ($cari_layanan == 'Cloud Storage') {
 
-        
+            // Semua Bucket
+            $data_semua_bucket = BucketGcp::withTrashed();
 
-        
+            //Kondisi
+            if($cari_nama != '') {
+                $data_semua_bucket = $data_semua_bucket->where('nama','LIKE','%'.$cari_nama.'%');
+            }
+
+            if($cari_lokasi != '') {
+                $data_semua_bucket = $data_semua_bucket->where('lokasi_gcp_id', $cari_lokasi);
+            }
+
+            if($cari_status != '') {
+                // Untuk bucket, status mungkin tidak relevan seperti pada CE atau CSQL
+                // Tapi kita tetap bisa filter jika diperlukan
+                // Misalnya, hanya tampilkan bucket yang tidak dihapus (status aktif)
+                if($cari_status == 'ACTIVE') {
+                    $data_semua_bucket = $data_semua_bucket->whereNull('deleted_at');
+                } elseif($cari_status == 'DELETED') {
+                    $data_semua_bucket = $data_semua_bucket->whereNotNull('deleted_at');
+                }
+            }
+
+            if( $request->has('tipe_sort') || $request->has('var_sort') ) {
+                $tipe_sort = $request->get('tipe_sort');
+                $var_sort = $request->get('var_sort');
+
+                $data_semua_bucket = $data_semua_bucket->orderBy($var_sort, $tipe_sort);
+            }
+
+
+            // Paginate
+
+            if ($set_pagination != '') {
+                $data_semua_bucket = $data_semua_bucket
+                            ->orderBy($var_sort, $tipe_sort)
+                            ->paginate($set_pagination);
+            } else {
+                $data_semua_bucket = $data_semua_bucket
+                            ->orderBy($var_sort, $tipe_sort)
+                            ->paginate(10);
+            }
+
+            $data_semua_bucket->appends($request->only(
+                $cari_layanan,
+                $cari_nama,
+                $cari_lokasi,
+                $cari_status,
+
+                $tipe_sort,
+                $var_sort
+            ));
+
+            // Untuk bucket, kita tidak menghitung resource CPU/RAM/Disk seperti pada CE atau CSQL
+            // Jadi variabel total tetap 0
+            $total_cpu_used = 0;
+            $total_ram_used = 0;
+            $total_disk_used = 0;
+
+        }
+
+
+
+
          return view('report.gcp', compact(
             'data_semua_ce',
             'data_semua_csql',
+            'data_semua_bucket',
             'data_semua_lokasi',
 
             'cari_layanan',
@@ -697,7 +762,7 @@ class ReportController extends Controller
 
     public function gcp_csql_excel(Request $request)
     {
-        
+
         $cari_nama = $request->get('cari_nama');
         $cari_lokasi = $request->get('cari_lokasi');
         $cari_status = $request->get('cari_status');
@@ -705,6 +770,18 @@ class ReportController extends Controller
         $date = date("Y-m-d_H:i:s");
 
         return Excel::download(new CloudSqlGcpExport($cari_nama, $cari_lokasi, $cari_status), 'csql-report-' . $date . '.xlsx');
+    }
+
+    public function gcp_bucket_excel(Request $request)
+    {
+
+        $cari_nama = $request->get('cari_nama');
+        $cari_lokasi = $request->get('cari_lokasi');
+        $cari_status = $request->get('cari_status');
+
+        $date = date("Y-m-d_H:i:s");
+
+        return Excel::download(new BucketGcpExport($cari_nama, $cari_lokasi, $cari_status), 'bucket-gcs-report-' . $date . '.xlsx');
     }
 
     public function gcp_ce_detail($id)
@@ -717,8 +794,15 @@ class ReportController extends Controller
     public function gcp_csql_detail($id)
     {
         $data_server = CloudSqlGcp::with('lokasi_gcp')->findOrFail($id);
-        
+
         return view('report.gcp-csql-detail', compact('data_server'));
+    }
+
+    public function gcp_bucket_detail($id)
+    {
+        $data_bucket = BucketGcp::with('lokasi_gcp')->findOrFail($id);
+
+        return view('report.gcp-bucket-detail', compact('data_bucket'));
     }
 
     //  --- Proxmox Infra ---
@@ -1076,6 +1160,136 @@ class ReportController extends Controller
 
 
     }
-    
+
+    // --- GCP Cloud Storage ---
+    public function gcp_get_all_bucket($id_project)
+    {
+        // define the scopes for your API call
+        $scopes = [
+            'https://www.googleapis.com/auth/devstorage.read_only'
+        ];
+
+        // create middleware
+        $middleware = ApplicationDefaultCredentials::getMiddleware($scopes);
+        $stack = HandlerStack::create();
+        $stack->push($middleware);
+
+        // create the HTTP client
+        $client = new Client([
+            'handler' => $stack,
+            'base_uri' => 'https://storage.googleapis.com',
+            'auth' => 'google_auth'  // authorize all requests
+        ]);
+
+        // make the request
+        $endpoint = 'storage/v1/b?project=' . $id_project;
+        $response = $client->get($endpoint);
+        $responseJSONencoded = json_decode($response->getBody());
+
+        return $responseJSONencoded;
+    }
+
+    public function gcp_bucket_sync()
+    {
+        $data_project = LokasiGcp::all();
+        $bucket_mapped_data = [];
+
+        // Sync Bucket
+        foreach ($data_project as $key_project => $value_project) {
+
+            try {
+                $bucket_data = $this->gcp_get_all_bucket($value_project->id_project);
+
+                // Log successful fetch
+                Log::info('GCP Bucket Sync - Fetch successful', [
+                    'project' => $value_project->id_project,
+                    'buckets_count' => isset($bucket_data->items) ? count($bucket_data->items) : 0
+                ]);
+
+                $bucket_mapped_data[$value_project->id_project] = $bucket_data;
+            } catch (\Exception $e) {
+                Log::error('GCP Bucket Sync - Fetch failed', [
+                    'project' => $value_project->id_project,
+                    'error' => $e->getMessage()
+                ]);
+                continue;
+            }
+
+        }
+
+        // Log before DB operations
+        Log::info('GCP Bucket Sync - Starting DB operations', [
+            'total_projects' => count($bucket_mapped_data)
+        ]);
+
+        // Save Bucket to DB
+
+        // Proses Simpan ke DB
+        DB::beginTransaction();
+
+        try {
+
+            $valid_bucket_names = [];
+
+            foreach ($bucket_mapped_data as $key_bucket => $value_bucket) {
+
+                $get_id_project = LokasiGcp::where('id_project', $key_bucket)->first();
+
+                if (isset($value_bucket->items)) {
+                    foreach ($value_bucket->items as $key_sub_bucket => $value_sub_bucket) {
+
+                        // Prepare Data
+                        $location = $value_sub_bucket->location ?? null;
+                        $storage_class = $value_sub_bucket->storageClass ?? null;
+                        $time_created = $value_sub_bucket->timeCreated ?? null;
+
+                        $valid_bucket_names[] = $value_sub_bucket->name;
+
+                        // Upsert
+                        $data = BucketGcp::withTrashed()->updateOrCreate(
+                            // Cek Variable
+                            [
+                                'nama' => $value_sub_bucket->name
+                            ],
+                            // Simpan Sisa/Semua
+                            [
+                                'lokasi_gcp_id'     => $get_id_project->id,
+                                'nama'              => $value_sub_bucket->name,
+                                'lokasi'            => $location,
+                                'tipe_storage'      => $storage_class,
+                                'dibuat'            => $time_created ? \Carbon\Carbon::parse($time_created) : null
+                            ]
+                        );
+
+                        if ($data->trashed()) {
+                            $data->restore();
+                        }
+                    }
+                }
+
+            };
+
+            // Soft delete buckets that are no longer in GCP
+            BucketGcp::whereNotIn('nama', $valid_bucket_names)->delete();
+
+            // Log successful completion
+            Log::info('GCP Bucket Sync - Completed', [
+                'total_buckets' => count($valid_bucket_names)
+            ]);
+
+            // Jika Semua Normal, Commit ke DB
+            DB::commit();
+
+        } catch (\Exception $e) {
+            // Jika ada yang Gagal, Rollback DB
+            DB::rollBack();
+
+            Log::error('ERROR - GCP - Save Get Bucket', (array)$e->getMessage());
+        }
+
+        // Return
+        return back()->with('pesan', 'Berhasil Sync Data Bucket!');
+    }
+
 
 }

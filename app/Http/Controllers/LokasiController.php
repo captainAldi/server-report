@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Crypt;
 
 use App\Models\LokasiGcp;
 use App\Models\LokasiProxmox;
+use App\Models\ServerGcp;
+use App\Models\CloudSqlGcp;
+use App\Models\BucketGcp;
 
 
 use Google\Auth\ApplicationDefaultCredentials;
@@ -19,11 +22,36 @@ class LokasiController extends Controller
 {
     // --- GCP ---
 
-    public function gcp_index()
+    public function gcp_index(Request $request)
     {
-        $data_lokasi = LokasiGcp::withTrashed()->get();
+        // Variabel untuk filter
+        $cari_nama = $request->get('cari_nama');
 
-        return view('lokasi.gcp', compact('data_lokasi'));
+        // Variabel untuk sorting
+        $var_sort = $request->get('var_sort', 'nama_project'); // Default sort by nama_project
+        $tipe_sort = $request->get('tipe_sort', 'asc'); // Default sort ascending
+
+        // Variabel untuk pagination
+        $set_pagination = $request->get('set_pagination', 10); // Default 10 items per page
+
+        // Query dasar
+        $query = LokasiGcp::withTrashed();
+
+        // Tambahkan filter jika ada
+        if ($cari_nama) {
+            $query->where('nama_project', 'LIKE', '%' . $cari_nama . '%');
+        }
+
+        // Tambahkan sorting
+        $query->orderBy($var_sort, $tipe_sort);
+
+        // Tambahkan pagination
+        $data_lokasi = $query->paginate($set_pagination);
+
+        // Tambahkan parameter ke pagination link
+        $data_lokasi->appends($request->only(['cari_nama', 'var_sort', 'tipe_sort', 'set_pagination']));
+
+        return view('lokasi.gcp', compact('data_lokasi', 'cari_nama', 'var_sort', 'tipe_sort', 'set_pagination'));
     }
 
     public function gcp_sync()
@@ -101,6 +129,17 @@ class LokasiController extends Controller
         }
 
         return back()->with('pesan', 'Berhasil Sync Data !');
+    }
+
+    public function gcp_detail($id)
+    {
+        $project = LokasiGcp::withTrashed()->findOrFail($id);
+        
+        $ce_list = ServerGcp::where('lokasi_gcp_id', $id)->get();
+        $csql_list = CloudSqlGcp::where('lokasi_gcp_id', $id)->get();
+        $bucket_list = BucketGcp::where('lokasi_gcp_id', $id)->get();
+
+        return view('lokasi.gcp-detail', compact('project', 'ce_list', 'csql_list', 'bucket_list'));
     }
 
     // --- Proxmox ---

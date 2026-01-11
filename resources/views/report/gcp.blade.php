@@ -110,6 +110,7 @@
                   <option value="">Pilih Opsi</option>
                   <option value="Compute Engine" {{ $cari_layanan == "Compute Engine" ? 'selected' : '' }}>Compute Engine</option>
                   <option value="Cloud SQL" {{ $cari_layanan == "Cloud SQL" ? 'selected' : '' }}>Cloud SQL</option>
+                  <option value="Cloud Storage" {{ $cari_layanan == "Cloud Storage" ? 'selected' : '' }}>Cloud Storage</option>
                 </select>
               </div>
 
@@ -135,12 +136,16 @@
                     <option value="">Pilih Opsi</option>
                     @if ($cari_layanan == 'Compute Engine')
                       <option value="RUNNING" {{ $cari_status == "RUNNING" ? 'selected' : '' }}>Running</option>
-                    @else
+                      <option value="TERMINATED" {{ $cari_status == "TERMINATED" ? 'selected' : '' }}>Terminated</option>
+                      <option value="DELETED" {{ $cari_status == "DELETED" ? 'selected' : '' }}>Deleted</option>
+                    @elseif ($cari_layanan == 'Cloud SQL')
                       <option value="RUNNABLE" {{ $cari_status == "RUNNABLE" ? 'selected' : '' }}>Runnable</option>
+                      <option value="TERMINATED" {{ $cari_status == "TERMINATED" ? 'selected' : '' }}>Terminated</option>
+                      <option value="DELETED" {{ $cari_status == "DELETED" ? 'selected' : '' }}>Deleted</option>
+                    @elseif ($cari_layanan == 'Cloud Storage')
+                      <option value="ACTIVE" {{ $cari_status == "ACTIVE" ? 'selected' : '' }}>Active</option>
+                      <option value="DELETED" {{ $cari_status == "DELETED" ? 'selected' : '' }}>Deleted</option>
                     @endif
-
-                    <option value="TERMINATED" {{ $cari_status == "TERMINATED" ? 'selected' : '' }}>Terminated</option>
-                    <option value="DELETED" {{ $cari_status == "DELETED" ? 'selected' : '' }}>Deleted</option>
                   </select>
                 </div>
               @endif
@@ -226,6 +231,11 @@
             </a>
           @elseif ($cari_layanan == 'Cloud SQL')
             <a class="btn btn-primary mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.csql.sync') }}" >
+              <i class="fa-solid fa-rotate">
+              </i>
+            </a>
+          @elseif ($cari_layanan == 'Cloud Storage')
+            <a class="btn btn-primary mr-3 mb-2 mt-2 " href="{{ route('get.report.usage.gcp.bucket.sync') }}" >
               <i class="fa-solid fa-rotate">
               </i>
             </a>
@@ -360,6 +370,61 @@
           </div>
 
         </div>
+      @elseif ($cari_layanan == 'Cloud Storage')
+        <div class="card-body table-responsive">
+          <table class="table table-bordered table-head-fixed">
+            <thead>
+              <tr>
+                <th style="width: 10px">No</th>
+                <th>Nama Bucket</th>
+                <th>Lokasi</th>
+                <th>Tipe Storage</th>
+                <th>Dibuat</th>
+                <th>Status</th>
+                <th class="text-nowrap">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($data_semua_bucket as $bucket)
+                <tr class="{{ $bucket->trashed() ? 'table-danger' : '' }}">
+
+                  <td>{{ $loop->iteration + $data_semua_bucket->firstItem() - 1 }}</td>
+                  <td>
+                    {{ $bucket->nama }}
+                    @if($bucket->trashed())
+                      <span class="badge badge-danger">SOFT DELETED</span>
+                    @endif
+                  </td>
+                  <td>{{ $bucket->lokasi_gcp->id_project }}</td>
+                  <td>{{ $bucket->tipe_storage }}</td>
+                  <td>{{ $bucket->dibuat }}</td>
+                  <td>
+                    @if($bucket->trashed())
+                      DELETED
+                    @else
+                      ACTIVE
+                    @endif
+                  </td>
+
+                  <td class="text-nowrap">
+                    <!-- Detail -->
+                    <a href="{{ route('get.report.usage.gcp.detail.bucket', $bucket->id) }}" class="btn btn-warning" aria-disabled="">
+                      <i class="fa fa-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card-footer clearfix">
+          <h5>Jumlah Data : <span>{{ $data_semua_bucket->total() }}</span></h5>
+          {{ $data_semua_bucket->links('vendor.pagination.adminlte-3') }}
+        </div>
+
       @else
         <div class="card-body">
           Silahkan Pilih Service !
@@ -399,8 +464,10 @@
 
     if (layanan == 'Compute Engine') {
       formFilter.action = "{{ route('get.report.usage.gcp.ce.excel') }}"
-    } else {
+    } else if (layanan == 'Cloud SQL') {
       formFilter.action = "{{ route('get.report.usage.gcp.csql.excel') }}"
+    } else if (layanan == 'Cloud Storage') {
+      formFilter.action = "{{ route('get.report.usage.gcp.bucket.excel') }}"
     }
 
     formFilter.submit();
