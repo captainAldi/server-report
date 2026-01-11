@@ -44,17 +44,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('report/usage/gcp', [App\Http\Controllers\ReportController::class, 'gcp_index'])->name('get.report.usage.gcp');
     Route::get('report/usage/gcp/ce/detail/{id}', [App\Http\Controllers\ReportController::class, 'gcp_ce_detail'])->name('get.report.usage.gcp.detail.ce');
     Route::get('report/usage/gcp/csql/detail/{id}', [App\Http\Controllers\ReportController::class, 'gcp_csql_detail'])->name('get.report.usage.gcp.detail.csql');
+    Route::get('report/usage/gcp/bucket/detail/{id}', [App\Http\Controllers\ReportController::class, 'gcp_bucket_detail'])->name('get.report.usage.gcp.detail.bucket');
 
     Route::get('report/usage/gcp/ce/sync', [App\Http\Controllers\ReportController::class, 'gcp_ce_sync'])->name('get.report.usage.gcp.ce.sync');
     Route::get('report/usage/gcp/ce/sync/deleted', [App\Http\Controllers\ReportController::class, 'gcp_ce_sync_del'])->name('get.report.usage.gcp.ce.sync.deleted');
     Route::get('report/usage/gcp/csql/sync', [App\Http\Controllers\ReportController::class, 'gcp_csql_sync'])->name('get.report.usage.gcp.csql.sync');
     Route::get('report/usage/gcp/csql/sync/deleted', [App\Http\Controllers\ReportController::class, 'gcp_csql_sync_del'])->name('get.report.usage.gcp.csql.sync.deleted');
+    Route::get('report/usage/gcp/bucket/sync', [App\Http\Controllers\ReportController::class, 'gcp_bucket_sync'])->name('get.report.usage.gcp.bucket.sync');
 
     Route::get('report/usage/proxmox', [App\Http\Controllers\ReportController::class, 'proxmox_index'])->name('get.report.usage.proxmox');
     Route::get('report/usage/proxmox/ce/detail/{id}', [App\Http\Controllers\ReportController::class, 'proxmox_detail'])->name('get.report.usage.proxmox.detail');
 
     Route::get('report/usage/gcp/ce/excel', [App\Http\Controllers\ReportController::class, 'gcp_ce_excel'])->name('get.report.usage.gcp.ce.excel');
     Route::get('report/usage/gcp/csql/excel', [App\Http\Controllers\ReportController::class, 'gcp_csql_excel'])->name('get.report.usage.gcp.csql.excel');
+    Route::get('report/usage/gcp/bucket/excel', [App\Http\Controllers\ReportController::class, 'gcp_bucket_excel'])->name('get.report.usage.gcp.bucket.excel');
     Route::get('report/usage/proxmox/excel', [App\Http\Controllers\ReportController::class, 'proxmox_excel'])->name('get.report.usage.proxmox.excel');
 
     Route::get('report/usage/proxmox/vm/sync', [App\Http\Controllers\ReportController::class, 'proxmox_vm_sync'])->name('get.report.usage.proxmox.vm.sync');
