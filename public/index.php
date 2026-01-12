@@ -5,11 +5,6 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Log;
 
-use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
-use OpenTelemetry\Contrib\Otlp\SpanExporter;
-use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
-use OpenTelemetry\SDK\Trace\TracerProvider;
-
 
 define('LARAVEL_START', microtime(true));
 

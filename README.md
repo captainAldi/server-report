@@ -11,7 +11,6 @@ Aplikasi Laravel untuk monitoring dan manajemen server dari **Google Cloud Platf
 - **Cloud Integration:** Google Cloud API (Compute Engine & Cloud SQL)
 - **Export:** Maatwebsite Excel
 - **Deployment:** Docker (php8.1-fpm + Nginx)
-- **Monitoring:** OpenTelemetry (optional)
 
 ## Fitur Utama
 
@@ -188,13 +187,6 @@ DB_PASSWORD=
 #### Google Cloud Platform
 ```env
 GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
-```
-
-#### OpenTelemetry (Optional)
-```env
-OTEL_EXPORTER_OTLP_ENDPOINT="http://your-otel-collector:4318/v1/traces"
-OTEL_SERVICE_NAME="server-report"
-OTEL_EXPORTER_OTLP_INSECURE=true
 ```
 
 #### Redis (Optional for caching)
