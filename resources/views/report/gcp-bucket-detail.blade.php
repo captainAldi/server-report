@@ -44,7 +44,7 @@
 
                 <div class="info-box-content">
                   <span class="info-box-text">Project</span>
-                  <span class="info-box-number">{{ $data_bucket->lokasi_gcp->id_project ?? '-' }}</span>
+                  <span class="info-box-number">{{ $data_bucket->lokasi_gcp ? $data_bucket->lokasi_gcp->id_project : '-' }}</span>
                 </div>
                 <!-- /.info-box-content -->
               </div>

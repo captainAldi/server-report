@@ -282,7 +282,7 @@
                       <span class="badge badge-danger">SOFT DELETED</span>
                     @endif
                   </td>
-                  <td>{{ $server->lokasi_gcp->id_project }}</td>
+                  <td>{{ $server->lokasi_gcp ? $server->lokasi_gcp->id_project : '-' }}</td>
                   <td>{{ $server->tipe }}</td>
                   <td>{{ $server->priv_ip }}</td>
                   <td>{{ $server->pub_ip }}</td>
@@ -342,7 +342,7 @@
                         <span class="badge badge-danger">SOFT DELETED</span>
                       @endif
                     </td>
-                    <td>{{ $csql->lokasi_gcp->id_project }}</td>
+                    <td>{{ $csql->lokasi_gcp ? $csql->lokasi_gcp->id_project : '-' }}</td>
                     <td>{{ $csql->tipe }}</td>
                     <td>{{ $csql->pub_ip }}</td>
                     <td>{{ $csql->v_cpu }}</td>
@@ -397,7 +397,7 @@
                       <span class="badge badge-danger">SOFT DELETED</span>
                     @endif
                   </td>
-                  <td>{{ $bucket->lokasi_gcp->id_project }}</td>
+                  <td>{{ $bucket->lokasi_gcp ? $bucket->lokasi_gcp->id_project : '-' }}</td>
                   <td>{{ $bucket->tipe_storage }}</td>
                   <td>{{ $bucket->dibuat }}</td>
                   <td>

@@ -43,7 +43,7 @@
                 </tr>
                 <tr>
                   <th>Project</th>
-                  <td>{{ $data_server->lokasi_gcp->id_project }}</td>
+                  <td>{{ $data_server->lokasi_gcp ? $data_server->lokasi_gcp->id_project : '-' }}</td>
                 </tr>
                 <tr>
                   <th>Tipe Machine</th>
