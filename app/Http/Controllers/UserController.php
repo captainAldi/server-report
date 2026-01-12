@@ -28,7 +28,7 @@ class UserController extends Controller
     {
         $data_users = User::query();
 
-        // Search by name or email
+        // Search by name or email pengguna
         if ($request->filled('cari_nama')) {
             $data_users->where(function($query) use ($request) {
                 $query->where('name', 'LIKE', '%' . $request->cari_nama . '%')
